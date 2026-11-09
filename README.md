@@ -1,40 +1,44 @@
 # cctv-ai-monitoring
 
-Scripts that use cameras which were already installed in a car service. Owner has several places and cant watch all cameras, so I tried to make cameras "understand" a bit what happens.
+Video analytics on existing cameras of a car service. Several sites, no new hardware.
+Repository contains code and example config only. No video.
 
-No video with people here, only code and example config.
+## Rules
+| Rule | Output |
+|---|---|
+| Night door | Telegram alert with snapshot if a person is near the door after closing |
+| Entrance line | Visitor count |
+| Oil dispenser zone | Who, when, how long |
+| Hands in zone | Wrist activity at cash desk or shelves |
+| Reconcile | Counted visitors vs registered orders |
 
-## What it does
-- **night doors** - after closing time if someone comes close to the door, owner gets message in Telegram with a photo
-- **counting customers** - line at the entrance, counts people going in
-- **oil dispenser** - writes who stood at the oil zone and how long
-- **hands in zone** - checks wrists, not the body. Useful for cash desk or shelves
-- **reconcile** - compare how many customers camera counted with how many orders were made in the office. If camera saw 5 and office made 3 orders, there is a question :)
+## Pipeline
+RTSP → YOLOv8-pose (people, wrists) → ByteTrack (ids) → rules → SQLite, Telegram.
 
-## How it works
-Camera (RTSP) -> YOLOv8-pose finds people and wrists -> ByteTrack gives each person id -> my rules check zones and lines -> events go to SQLite and alerts to Telegram.
+Person position is the bottom center of the box. Stable when the body is partly hidden by a car.
 
-Position of a person is the bottom middle of the box (where legs are). It works better than center of the box when person is partly behind a car.
+## Models
+| Model | Notes |
+|---|---|
+| YOLOv8n-pose | Used. Boxes and keypoints in one pass, runs on CPU. |
+| YOLO11-pose | Planned. Higher accuracy, same API. |
+| RT-DETR | Better in crowds, slower. |
+| MediaPipe Hands | Poor on ceiling cameras with low resolution. |
+| ByteTrack / BoT-SORT | ByteTrack is enough. BoT-SORT holds ids better on crossings. |
 
-## Which AI to use (my opinion)
-- **YOLOv8n-pose** - I use it because it gives boxes and keypoints in one model and works on usual PC without big GPU. n version is fast, s version is more accurate
-- **YOLO11** - newer, a bit better accuracy, same API in ultralytics, I want to switch
-- **RT-DETR** - more accurate for crowded scenes but slower
-- **MediaPipe Hands** - more detailed hands, but bad from ceiling cameras with low resolution
-- **ByteTrack** vs **BoT-SORT** - ByteTrack was enough, BoT-SORT keeps ids better when people cross each other
-
-Problems I saw: at night IR camera image is grey and detection is worse, false alarms from cats and from shadows of cars. Cooldown and minimal time in zone helped a lot.
+## Known issues
+IR night image lowers detection quality. False alerts from animals and car shadows. Reduced by cooldown and minimum time in zone.
 
 ## Privacy
-I think this part is important. No face recognition, people are just numbers. Only events and counts are saved, video stays on the company recorder. Photo is sent only for night alerts.
+No face recognition. People are anonymous track ids. Only events are stored. Video stays on the local recorder.
 
 ## Run
 ```
 pip install -r requirements.txt
-cp zones.example.json zones.json   # put your rtsp and zones
+cp zones.example.json zones.json
 python run.py --config zones.json --show
 python reconcile.py --orders orders.csv --day 2026-10-15
 pytest -q
 ```
 
-Stack: Python, ultralytics YOLOv8-pose, ByteTrack, OpenCV, SQLite, Telegram API
+Python, Ultralytics, ByteTrack, OpenCV, SQLite.
