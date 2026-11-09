@@ -1,0 +1,20 @@
+{
+  "camera": "service-area-1",
+  "source": "rtsp://user:password@192.168.1.64:554/Streaming/Channels/101",
+  "model": "yolov8n-pose.pt",
+  "conf": 0.4,
+  "frame_step": 2,
+  "db": "events.db",
+  "night_doors": [
+    {"name": "back-door", "polygon": [[820, 300], [1010, 300], [1010, 700], [820, 700]], "start": "21:00", "end": "08:00"}
+  ],
+  "entrance_lines": [
+    {"name": "client-entrance", "a": [200, 620], "b": [700, 620], "inside_sign": 1}
+  ],
+  "visit_zones": [
+    {"name": "oil-dispenser", "polygon": [[1100, 380], [1260, 380], [1260, 720], [1100, 720]], "min_seconds": 5}
+  ],
+  "hand_zones": [
+    {"name": "cash-desk", "polygon": [[400, 300], [620, 300], [620, 420], [400, 420]], "min_seconds": 2}
+  ]
+}
