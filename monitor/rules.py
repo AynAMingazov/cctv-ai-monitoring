@@ -1,7 +1,7 @@
 """Business rules on top of person detections.
 
 Each rule receives, for every frame, a list of tracked people:
-    Person(track_id, box, wrists)  — wrists are (x, y) keypoints from a pose model
+    Person(track_id, box, wrists)  - wrists are (x, y) keypoints from a pose model
 and returns a list of events (dicts) to be logged and, if needed, sent as alerts.
 """
 from __future__ import annotations
